@@ -9,6 +9,11 @@
     W (Up Arrow)                  Jump
     Space Bar                     Attack
 
+Debug controls:
+O --> debug pannel
+G --> Moon gravity
+H --> Hitbox visuals
+
   Tile key:
     g = groundTile.png       (surface ground)
     d = groundTileDeep.png   (deep ground, below surface)
@@ -32,6 +37,15 @@ let groundImg, groundDeepImg;
 
 let attacking = false; // track if the player is attacking
 let attackFrameCounter = 0; // tracking attack animation
+
+let debug = {
+  open: false,
+  moonGravity: false,
+  showHitboxes: false,
+};
+
+const GRAVITY_NORMAL = 10;
+const GRAVITY_MOON = 1.6;
 
 // --- TILE MAP ---
 // an array that uses the tile key to create the level
@@ -154,6 +168,18 @@ function startMusicIfNeeded() {
 
 function keyPressed() {
   startMusicIfNeeded();
+  if (key === "o" || key === "O") {
+    debug.open = !debug.open;
+  }
+
+  if (key === "g" || key === "G") {
+    debug.moonGravity = !debug.moonGravity;
+    world.gravity.y = debug.moonGravity ? GRAVITY_MOON : GRAVITY_NORMAL;
+  }
+
+  if (key === "h" || key === "H") {
+    debug.showHitboxes = !debug.showHitboxes;
+  }
 }
 
 function mousePressed() {
@@ -163,6 +189,47 @@ function mousePressed() {
 function touchStarted() {
   startMusicIfNeeded();
   return false;
+}
+
+function debugRect(x, y, w, h, col) {
+  push();
+  noFill();
+  stroke(col || color(0, 255, 0));
+  strokeWeight(0.5);
+  rectMode(CENTER);
+  rect(x, y, w, h);
+  pop();
+}
+function drawHitboxes() {
+  debugRect(player.x, player.y, player.w, player.h, color(255, 80, 80));
+  debugRect(sensor.x, sensor.y, sensor.w, sensor.h, color(80, 180, 255));
+  for (let t of ground) debugRect(t.x, t.y, t.w, t.h, color(80, 255, 80));
+  for (let t of groundDeep) debugRect(t.x, t.y, t.w, t.h, color(160, 120, 60));
+}
+function drawDebugPanel(grounded) {
+  camera.off();
+
+  push();
+  fill(0, 150); // semi-transparent background
+  noStroke();
+  rect(10, 10, 140, 80);
+
+  fill(255);
+  textSize(10);
+  textAlign(LEFT, TOP);
+
+  text("DEBUG PANEL", 15, 15);
+  text("Grounded: " + grounded, 15, 30);
+  text("Moon Gravity: " + debug.moonGravity, 15, 45);
+  text("Hitboxes: " + debug.showHitboxes, 15, 60);
+
+  pop();
+
+  camera.on();
+}
+function drawDebugHint() {
+  camera.off();
+  camera.on();
 }
 
 function draw() {
@@ -221,4 +288,8 @@ function draw() {
 
   // --- KEEP IN VIEW ---
   player.pos.x = constrain(player.pos.x, FRAME_W / 2, VIEWW - FRAME_W / 2);
+
+  if (debug.showHitboxes) drawHitboxes();
+  if (debug.open) drawDebugPanel(grounded);
+  else drawDebugHint();
 }
